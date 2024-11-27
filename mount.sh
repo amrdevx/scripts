@@ -1,25 +1,33 @@
 #!/bin/bash
 
-# lsblk,doas blkid,doas fdisk -l,lsusb,df,mount,pmount
-#
-usb_devices=$(doas blkid | awk '{print $1}' | tr -d ":" | dmenu)
-usb_dir=${usb_devices/\/dev\//\/media\/} 
-use_dir2=$(ls /media)
+devices=$(doas fdisk -l | grep '^/dev/sd[b-z]' | awk '{print $1}' | dmenu)
 
-echo $use_dir2
-if [ ! -d $use_dir2 ];then
-	echo "true"
+mountFolder="$HOME/mount"
+notify=""
+
+[ ! -d "$mountFolder" ] && mkdir -p "$mountFolder"
+
+if [ -z "$devices" ]; then
+		exit
 fi
 
-#if [ "$usb_devices" = "" ];then
-#	exit
-#else
-#	if [ ! -d $usb_dir ];then
-#		udevil mount $usb_devices
-#		echo $usb_devices "Mounted" | dmenu
-#	else
-#		udevil umount $usb_devices
-#		echo $usb_devices "Umounted" | dmenu 
-#
-#	fi
-#fi
+
+
+if findmnt -rn -S "$devices" > /dev/null ; then
+	pumount "$devices"
+	if [ $? -ne 0  ] ;then
+	 	notify="CAN'T MOUNT ROOT"
+	else
+		notify="The device $devices is unmounted."
+	fi
+else
+	if [ -n "$devices" ]; then
+		pmount "$devices" "$mountFolder"
+		notify="Mounted $devices to $mountFolder"
+	else
+		notify="No device selected."
+	fi
+fi
+
+
+notify-send "$notify"

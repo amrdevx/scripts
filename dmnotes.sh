@@ -10,7 +10,7 @@ newNote () {
 }
 
 getNote () {
-	note=$(echo -e "New\n$(ls "$folder")" | dmenu -p "Select one")
+	note=$(echo -e "New\n$(ls "$folder")" | dmenu -i -p "Select one")
 	case $note in
 		New) newNote ;;
 		*.txt) setsid -f "$TERMINAL" vim "$folder/$note";;
